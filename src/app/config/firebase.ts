@@ -1,5 +1,5 @@
 // ============================================
-// File 1: teacher-portal/src/app/config/firebase.ts
+// UPDATED: teacher-portal/src/app/config/firebase.ts
 // ============================================
 import { initializeApp } from "firebase/app";
 import { 
@@ -45,26 +45,45 @@ export const logoutUser = async () => {
   await signOut(auth);
 };
 
-// Firestore Functions
+// ✅ FIXED: Get teacher data from BOTH users AND teachers collection
 export const getUserData = async (uid: string) => {
-  const docRef = doc(db, "users", uid);
-  const docSnap = await getDoc(docRef);
+  // Pehle users collection check karo
+  const userDocRef = doc(db, "users", uid);
+  const userDocSnap = await getDoc(userDocRef);
   
-  if (docSnap.exists()) {
-    return docSnap.data();
-  } else {
-    const defaultData = {
-      uid: uid,
-      name: "Teacher",
-      email: "",
-      role: "teacher",
-      subject: "Multiple Subjects",
-      avatar: "TR",
-      createdAt: new Date().toISOString()
-    };
-    await setDoc(docRef, defaultData);
-    return defaultData;
+  if (userDocSnap.exists()) {
+    const userData = userDocSnap.data();
+    
+    // Agar teacher hai to teachers collection se bhi data lo
+    if (userData.role === "teacher") {
+      const teacherDocRef = doc(db, "teachers", uid);
+      const teacherDocSnap = await getDoc(teacherDocRef);
+      if (teacherDocSnap.exists()) {
+        return { ...userData, ...teacherDocSnap.data() };
+      }
+    }
+    return userData;
   }
+  
+  // Agar users mein nahi mila, teachers collection check karo
+  const teacherDocRef = doc(db, "teachers", uid);
+  const teacherDocSnap = await getDoc(teacherDocRef);
+  if (teacherDocSnap.exists()) {
+    return teacherDocSnap.data();
+  }
+  
+  // Default teacher data
+  const defaultData = {
+    uid: uid,
+    name: "Teacher",
+    email: "",
+    role: "teacher",
+    subject: "Multiple Subjects",
+    avatar: "TR",
+    createdAt: new Date().toISOString()
+  };
+  await setDoc(userDocRef, defaultData);
+  return defaultData;
 };
 
 export const updateUserProfile = async (uid: string, data: any) => {
@@ -74,11 +93,25 @@ export const updateUserProfile = async (uid: string, data: any) => {
   });
 };
 
-// Get students by teacher
+// ✅ FIXED: Get students assigned to THIS teacher from students collection
 export const getTeacherStudents = async (teacherId: string) => {
-  const q = query(collection(db, "users"), where("role", "==", "student"));
+  const q = query(collection(db, "students"), where("assignedTeacherId", "==", teacherId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => doc.data());
+  return snapshot.docs.map(doc => ({ studentId: doc.id, ...doc.data() }));
+};
+
+// ✅ NEW: Get batches assigned to THIS teacher
+export const getTeacherBatches = async (teacherId: string) => {
+  const q = query(collection(db, "batches"), where("teachers", "array-contains", teacherId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+// ✅ NEW: Get classes for THIS teacher
+export const getTeacherClasses = async (teacherId: string) => {
+  const q = query(collection(db, "classes"), where("teacherId", "==", teacherId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
 // Storage Functions

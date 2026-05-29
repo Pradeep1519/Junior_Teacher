@@ -1,5 +1,5 @@
 // ============================================
-// UPDATE: teacher-portal/src/routes.tsx
+// FIXED: teacher-portal/src/routes.tsx
 // ============================================
 import { createBrowserRouter } from "react-router";
 import { Root } from "./app/components/Root";
@@ -12,6 +12,8 @@ import { AssignmentManagement } from "./app/components/teacher/AssignmentManagem
 import { DoubtResolution } from "./app/components/teacher/DoubtResolution";
 import { AnalyticsReports } from "./app/components/teacher/AnalyticsReports";
 import { TeacherSettings } from "./app/components/teacher/TeacherSettings";
+import { MyBatches } from "./app/components/teacher/MyBatches";  // ✅ ADD
+
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +25,7 @@ export const router = createBrowserRouter([
       { path: "teacher/dashboard", Component: TeacherDashboard },
       { path: "teacher/classes", Component: ClassManagement },
       { path: "teacher/students", Component: StudentManagement },
+      { path: "teacher/batches", Component: MyBatches },      // ✅ ADDED
       { path: "teacher/content", Component: ContentManagement },
       { path: "teacher/assignments", Component: AssignmentManagement },
       { path: "teacher/doubts", Component: DoubtResolution },
